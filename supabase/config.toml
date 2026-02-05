@@ -1,0 +1,4 @@
+project_id = "xfhlhybxqgqbhncsdiry"
+
+[functions.valorant-query]
+verify_jwt = false

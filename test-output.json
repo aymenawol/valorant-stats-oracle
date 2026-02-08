@@ -1,0 +1,17 @@
+﻿{
+    "success":  true,
+    "query":  "list all teams",
+    "sql":  "SELECT name AS team_name, region\nFROM teams\nORDER BY name\nLIMIT 25",
+    "results":  [
+
+                ],
+    "columns":  [
+
+                ],
+    "column_formats":  {
+
+                       },
+    "explanation":  "The query couldn\u0027t be executed.",
+    "count":  0,
+    "error":  "{\"code\":\"42601\",\"details\":null,\"hint\":null,\"message\":\"syntax error at or near \\\"LIMIT\\\"\"}"
+}

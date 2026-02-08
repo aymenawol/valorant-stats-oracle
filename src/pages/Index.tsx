@@ -1,41 +1,57 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { QueryResult } from "@/components/QueryResult";
-import { supabase } from "@/integrations/supabase/client";
+import { queryStats, type QueryResponse } from "@/lib/vlr-api";
 import { toast } from "sonner";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<QueryResponse | null>(null);
+  const [lastQuery, setLastQuery] = useState("");
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
     setResult(null);
+    setLastQuery(query);
 
     try {
-      const { data, error } = await supabase.functions.invoke("valorant-query", {
-        body: { query },
-      });
-
-      if (error) {
-        console.error("Function error:", error);
-        toast.error("Failed to process query");
-        setResult({ success: false, error: error.message });
-        return;
-      }
-
+      const data = await queryStats(query);
       setResult(data);
+      if (!data.success && data.error) {
+        toast.error(data.error);
+      }
     } catch (err) {
       console.error("Search error:", err);
-      toast.error("Something went wrong");
-      setResult({ 
-        success: false, 
-        error: err instanceof Error ? err.message : "An unexpected error occurred" 
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
+      const isNetworkError = message.toLowerCase().includes("failed to send") ||
+        message.toLowerCase().includes("fetch") ||
+        message.toLowerCase().includes("network");
+
+      toast.error(isNetworkError
+        ? "Couldn't reach the server. Retrying may help."
+        : "Failed to process query");
+
+      setResult({
+        success: false,
+        query,
+        sql: null,
+        results: [],
+        columns: [],
+        column_formats: {},
+        explanation: "",
+        count: 0,
+        error: isNetworkError
+          ? "The server is temporarily unavailable. Please try again."
+          : message,
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleRetry = useCallback(() => {
+    if (lastQuery) handleSearch(lastQuery);
+  }, [lastQuery]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -62,17 +78,32 @@ const Index = () => {
                 <span className="text-primary-foreground font-black text-lg">V</span>
               </div>
               <span className="text-xl font-bold text-foreground tracking-tight">
-                VAL<span className="text-primary">STATS</span>
+                VCT <span className="text-primary">STATS</span>
               </span>
             </div>
             <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Players
+              <a
+                href="https://www.vlr.gg/stats"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                VLR.gg Stats
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Teams
+              <a
+                href="https://www.vlr.gg/rankings"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Rankings
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="https://www.vlr.gg/events"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Events
               </a>
             </nav>
@@ -90,9 +121,13 @@ const Index = () => {
                 <span className="text-primary">VALORANT</span> esports
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Natural language search powered by real match data.
+                Natural language queries powered by{" "}
+                <a href="https://www.vlr.gg" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  vlr.gg
+                </a>{" "}
+                match data.
                 <br className="hidden md:block" />
-                Get accurate stats, instantly computed from our database.
+                Averages, comparisons, leaderboards — just ask.
               </p>
             </div>
 
@@ -100,7 +135,11 @@ const Index = () => {
             <SearchBar onSearch={handleSearch} isLoading={isLoading} />
 
             {/* Results */}
-            <QueryResult data={result} isLoading={isLoading} />
+            <QueryResult
+              data={result}
+              isLoading={isLoading}
+              onRetry={handleRetry}
+            />
           </div>
         </main>
 
@@ -108,11 +147,19 @@ const Index = () => {
         <footer className="border-t border-border py-8 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              Powered by Lovable Cloud • Data for demonstration purposes
+              Data sourced from{" "}
+              <a href="https://www.vlr.gg" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                vlr.gg
+              </a>{" "}
+              via{" "}
+              <a href="https://github.com/axsddlr/vlrggapi" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                vlrggapi
+              </a>
+              . Not affiliated with Riot Games or vlr.gg.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-xs text-muted-foreground">
-                Sample data includes: VCT Champions 2023-2024, Masters events
+                VCT Champions, Masters, Challengers & league data
               </span>
             </div>
           </div>

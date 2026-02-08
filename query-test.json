@@ -1,0 +1,17 @@
+﻿{
+    "success":  true,
+    "query":  "top 5 teams by ranking in NA",
+    "sql":  "SELECT t.name AS team_name, r.rank, r.record, r.earnings, r.snapshot_date\nFROM rankings r\nJOIN teams t ON r.team_id = t.id\nWHERE r.region = \u0027NA\u0027\nORDER BY r.rank ASC\nLIMIT 5",
+    "results":  [
+
+                ],
+    "columns":  [
+
+                ],
+    "column_formats":  {
+
+                       },
+    "explanation":  "The query couldn\u0027t be executed.",
+    "count":  0,
+    "error":  "syntax error at or near \"LIMIT\""
+}

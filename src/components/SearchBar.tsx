@@ -9,11 +9,14 @@ interface SearchBarProps {
 }
 
 const EXAMPLE_QUERIES = [
-  "highest ACS on Bind in VCT internationals",
-  "most kills in a single map at Champions",
-  "best K/D on Haven by duelists in playoffs",
-  "aspas stats at Champions 2023",
-  "TenZ performance on Jett",
+  "average ACS by team at Champions",
+  "compare TenZ and aspas career stats",
+  "top 5 duelists by K/D in 2024",
+  "most picked agents on Lotus",
+  "highest single-map ACS at Champions 2023",
+  "best headshot percentage players with 10+ maps",
+  "which team won the most maps at Masters Tokyo",
+  "Fnatic player stats on Haven",
 ];
 
 export const SearchBar = ({ onSearch, isLoading = false, placeholder }: SearchBarProps) => {
@@ -91,7 +94,7 @@ export const SearchBar = ({ onSearch, isLoading = false, placeholder }: SearchBa
           <Sparkles className="w-4 h-4" />
           Try:
         </span>
-        {EXAMPLE_QUERIES.slice(0, 3).map((example) => (
+        {EXAMPLE_QUERIES.slice(0, 4).map((example) => (
           <button
             key={example}
             onClick={() => handleExampleClick(example)}

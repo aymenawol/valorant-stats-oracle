@@ -1,4 +1,7 @@
-project_id = "xfhlhybxqgqbhncsdiry"
+project_id = "lqgjtzbknbbtvyghssdp"
 
 [functions.valorant-query]
+verify_jwt = false
+
+[functions.vlr-ingest]
 verify_jwt = false

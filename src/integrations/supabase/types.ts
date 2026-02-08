@@ -196,6 +196,7 @@ export type Database = {
           map_id: string
           multi_kills: number | null
           player_id: string
+          rating: number | null
           rounds_played: number | null
           team_id: string
         }
@@ -217,6 +218,7 @@ export type Database = {
           map_id: string
           multi_kills?: number | null
           player_id: string
+          rating?: number | null
           rounds_played?: number | null
           team_id: string
         }
@@ -238,6 +240,7 @@ export type Database = {
           map_id?: string
           multi_kills?: number | null
           player_id?: string
+          rating?: number | null
           rounds_played?: number | null
           team_id?: string
         }
@@ -322,6 +325,8 @@ export type Database = {
           name: string
           region: string | null
           updated_at: string
+          vlr_id: string | null
+          vlr_url: string | null
         }
         Insert: {
           abbreviation?: string | null
@@ -331,6 +336,8 @@ export type Database = {
           name: string
           region?: string | null
           updated_at?: string
+          vlr_id?: string | null
+          vlr_url?: string | null
         }
         Update: {
           abbreviation?: string | null
@@ -340,6 +347,8 @@ export type Database = {
           name?: string
           region?: string | null
           updated_at?: string
+          vlr_id?: string | null
+          vlr_url?: string | null
         }
         Relationships: []
       }
@@ -348,7 +357,63 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      execute_readonly_query: {
+        Args: {
+          query_text: string
+        }
+        Returns: unknown[]
+      }
+      search_player_stats: {
+        Args: {
+          p_player_ign?: string
+          p_team_name?: string
+          p_map_name?: string
+          p_event_name?: string
+          p_event_tier?: string
+          p_stage?: string
+          p_agent_name?: string
+          p_agent_role?: string
+          p_player_role?: string
+          p_year_min?: number
+          p_year_max?: number
+          p_order_by?: string
+          p_order_dir?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          stat_id: string
+          player_ign: string
+          player_name: string
+          player_role: string | null
+          team_name: string
+          team_abbreviation: string | null
+          agent_name: string | null
+          agent_role: string | null
+          map_name: string
+          event_name: string | null
+          event_tier: string | null
+          event_year: number | null
+          match_stage: string | null
+          match_date: string | null
+          kills: number
+          deaths: number
+          assists: number
+          acs: number | null
+          adr: number | null
+          kast: number | null
+          rating: number | null
+          first_kills: number | null
+          first_deaths: number | null
+          headshot_percentage: number | null
+          clutches_won: number | null
+          clutches_attempted: number | null
+          multi_kills: number | null
+          rounds_played: number | null
+          kd_ratio: number | null
+          vlr_match_url: string | null
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

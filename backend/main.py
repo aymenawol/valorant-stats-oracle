@@ -15,7 +15,7 @@ from input_validator import validate_input, ValidationError
 from nlp_parser import parse
 from normalizer import normalize, make_cache_key
 from url_builder import build_url, InvalidParamError
-from scraper import fetch_html, parse_stats_html, ScraperError
+from scraper import fetch_html, parse_stats_html, ScraperError, fetch_player_avatar
 from data_normalizer import normalize_rows
 from response_generator import generate_response
 from cache import get_or_fetch, close_redis, get_redis
@@ -163,3 +163,18 @@ async def health_scraper():
                 "checked_at": datetime.now(timezone.utc).isoformat(),
             },
         )
+
+
+# ------------- Player avatar endpoint ----------------------------------------
+
+@app.get("/api/player/{player_id}/avatar")
+async def player_avatar(player_id: int):
+    """Return the avatar URL for a VLR player. Cached for 24h."""
+    cache_key = f"avatar:{player_id}"
+
+    async def do_fetch():
+        url = await fetch_player_avatar(player_id)
+        return {"avatar_url": url}
+
+    result = await get_or_fetch(cache_key, do_fetch, ttl=86400)
+    return result

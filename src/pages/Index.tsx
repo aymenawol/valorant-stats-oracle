@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { QueryResult } from "@/components/QueryResult";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { queryStats, type QueryResponse } from "@/lib/api";
 
 const Index = () => {
@@ -55,6 +56,7 @@ const Index = () => {
                 VAL<span className="text-primary">MUSE</span>
               </span>
             </div>
+            <ThemeToggle />
           </div>
         </header>
 

@@ -37,12 +37,14 @@ async def close_redis():
 async def get_or_fetch(
     cache_key: str,
     fetch_fn: Callable[[], Awaitable[Any]],
+    ttl: int | None = None,
 ) -> Any:
     """
     Get cached result or fetch with request coalescing.
     Only one scrape fires for concurrent identical requests.
     """
     r = await get_redis()
+    effective_ttl = ttl if ttl is not None else settings.cache_ttl
 
     # Check cache first
     cached = await r.get(cache_key)
@@ -57,7 +59,7 @@ async def get_or_fetch(
     if acquired:
         try:
             result = await fetch_fn()
-            await r.setex(cache_key, settings.cache_ttl, json.dumps(result))
+            await r.setex(cache_key, effective_ttl, json.dumps(result))
             return result
         finally:
             await r.delete(lock_key)

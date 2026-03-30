@@ -1,5 +1,7 @@
-import { AlertCircle, Trophy, Award } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertCircle, Trophy, Award, User } from "lucide-react";
 import type { QueryResponse, PlayerResult } from "@/lib/api";
+import { fetchAvatarUrl } from "@/lib/api";
 
 interface QueryResultProps {
   data: QueryResponse | null;
@@ -66,7 +68,7 @@ export const QueryResult = ({ data, error, isLoading }: QueryResultProps) => {
             {/* Table header */}
             <div className="grid grid-cols-[3rem_1fr_6rem_5rem_5rem_5rem_5rem] gap-2 px-6 py-3 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <span>#</span>
-              <span>Player</span>
+              <span className="pl-12">Player</span>
               <span className="text-right">{data.players[0]?.metric || "ACS"}</span>
               <span className="text-right">K/D</span>
               <span className="text-right">KAST</span>
@@ -92,6 +94,17 @@ export const QueryResult = ({ data, error, isLoading }: QueryResultProps) => {
 };
 
 function PlayerRow({ player }: { player: PlayerResult }) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    if (player.player_id != null) {
+      fetchAvatarUrl(player.player_id).then((url) => {
+        if (url) setAvatarUrl(url);
+      });
+    }
+  }, [player.player_id]);
+
   const rankIcon = () => {
     if (player.rank === 1) return <Trophy className="w-5 h-5 text-[hsl(45,100%,60%)]" />;
     if (player.rank === 2) return <Award className="w-5 h-5 text-[hsl(220,10%,70%)]" />;
@@ -102,11 +115,26 @@ function PlayerRow({ player }: { player: PlayerResult }) {
   return (
     <div className="grid grid-cols-[3rem_1fr_6rem_5rem_5rem_5rem_5rem] gap-2 px-6 py-4 border-b border-border/50 last:border-b-0 hover:bg-secondary/30 transition-colors">
       <div className="flex items-center justify-center">{rankIcon()}</div>
-      <div className="flex flex-col justify-center min-w-0">
-        <span className="font-bold text-foreground truncate">{player.player}</span>
-        {player.team && (
-          <span className="text-xs text-muted-foreground truncate">{player.team}</span>
-        )}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
+          {avatarUrl && !imgError ? (
+            <img
+              src={avatarUrl}
+              alt={player.player}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+              loading="lazy"
+            />
+          ) : (
+            <User className="w-5 h-5 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex flex-col justify-center min-w-0">
+          <span className="font-bold text-foreground truncate">{player.player}</span>
+          {player.team && (
+            <span className="text-xs text-muted-foreground truncate">{player.team}</span>
+          )}
+        </div>
       </div>
       <span className="text-right font-black text-primary self-center text-lg">{player.value}</span>
       <span className="text-right text-foreground self-center">{player.kd?.toFixed(2) ?? "—"}</span>

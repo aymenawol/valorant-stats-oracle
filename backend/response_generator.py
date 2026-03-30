@@ -119,6 +119,7 @@ def generate_response(
             "rank": i + 1,
             "player": row.get("player", "Unknown"),
             "team": row.get("team", ""),
+            "player_id": row.get("player_id"),
             "value": _format_metric_value(row, metric),
             "metric": metric_label,
             "acs": row.get("acs"),

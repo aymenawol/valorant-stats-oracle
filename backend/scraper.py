@@ -142,13 +142,26 @@ def parse_stats_html(html: str) -> list[dict[str, Any]]:
         if len(cells) < 10:
             continue
 
-        # First cell: player name and team
+        # First cell: player name, team, and profile link
         player_cell = cells[0]
         player_name_el = player_cell.select_one(".text-of")
         team_name_el = player_cell.select_one(".stats-player-country")
 
         player = player_name_el.get_text(strip=True) if player_name_el else None
         team = team_name_el.get_text(strip=True) if team_name_el else None
+
+        # Extract player ID from profile link (e.g., /player/261/victor)
+        player_id: int | None = None
+        player_link = player_cell.select_one("a[href*='/player/']")
+        if player_link:
+            href = player_link.get("href", "")
+            parts = str(href).strip("/").split("/")
+            # Expected: ["player", "261", "victor"] or ["player", "261"]
+            if len(parts) >= 2:
+                try:
+                    player_id = int(parts[1])
+                except (ValueError, IndexError):
+                    pass
 
         # If we can't find structured elements, try raw text
         if not player:
@@ -170,6 +183,7 @@ def parse_stats_html(html: str) -> list[dict[str, Any]]:
         entry: dict[str, Any] = {
             "player": player,
             "team": team,
+            "player_id": player_id,
             "rounds": rounds_val,
             "acs": acs_val,
             "kd": kd_val,
@@ -201,3 +215,54 @@ def validate_parsed_rows(rows: list[dict[str, Any]], raw_html_snippet: str | Non
                     f"Missing field '{field}' — scraper may be broken",
                     raw_html_snippet,
                 )
+
+
+# -------------- Player avatar ------------------------------------------------
+
+
+async def fetch_player_avatar(player_id: int) -> str | None:
+    """Fetch the player profile page and extract the avatar image URL.
+    Returns an absolute URL or None if not found.
+    """
+    url = f"{settings.vlr_base_url.rstrip('/stats')}/player/{player_id}"
+    try:
+        html = await fetch_html(url)
+    except ScraperError:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # VLR player pages have the avatar in a div.player-header img or similar
+    # Try several selectors for robustness
+    for selector in [
+        ".player-header img",
+        ".wf-avatar img",
+        "img.wf-avatar",
+        ".player-header .wf-avatar",
+    ]:
+        el = soup.select_one(selector)
+        if el:
+            src = el.get("src")
+            if src:
+                src = str(src).strip()
+                if src.startswith("//"):
+                    return "https:" + src
+                if src.startswith("/"):
+                    return "https://www.vlr.gg" + src
+                return src
+
+    # Fallback: find any img inside a player-header-like container
+    header = soup.select_one(".player-header")
+    if header:
+        img = header.find("img")
+        if img:
+            src = img.get("src")
+            if src:
+                src = str(src).strip()
+                if src.startswith("//"):
+                    return "https:" + src
+                if src.startswith("/"):
+                    return "https://www.vlr.gg" + src
+                return src
+
+    return None

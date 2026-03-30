@@ -1,37 +1,27 @@
 import { useState } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { QueryResult } from "@/components/QueryResult";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { queryStats, type QueryResponse } from "@/lib/api";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<QueryResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
     setResult(null);
+    setError(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("valorant-query", {
-        body: { query },
-      });
-
-      if (error) {
-        console.error("Function error:", error);
-        toast.error("Failed to process query");
-        setResult({ success: false, error: error.message });
-        return;
-      }
-
+      const data = await queryStats(query);
       setResult(data);
     } catch (err) {
-      console.error("Search error:", err);
-      toast.error("Something went wrong");
-      setResult({ 
-        success: false, 
-        error: err instanceof Error ? err.message : "An unexpected error occurred" 
-      });
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -42,14 +32,14 @@ const Index = () => {
       {/* Background effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(0_100%_60%/0.08),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,hsl(220_80%_50%/0.05),transparent_50%)]" />
-      
+
       {/* Grid pattern */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
                            linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
+          backgroundSize: "60px 60px",
         }}
       />
 
@@ -62,20 +52,9 @@ const Index = () => {
                 <span className="text-primary-foreground font-black text-lg">V</span>
               </div>
               <span className="text-xl font-bold text-foreground tracking-tight">
-                VAL<span className="text-primary">STATS</span>
+                VAL<span className="text-primary">MUSE</span>
               </span>
             </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Players
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Teams
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Events
-              </a>
-            </nav>
           </div>
         </header>
 
@@ -85,14 +64,15 @@ const Index = () => {
             {/* Title */}
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-foreground mb-4 tracking-tight">
-                Ask anything about
+                Search{" "}
+                <span className="text-primary">VALORANT</span>
                 <br />
-                <span className="text-primary">VALORANT</span> esports
+                pro stats
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Natural language search powered by real match data.
+                Natural language search powered by VLR.gg stats.
                 <br className="hidden md:block" />
-                Get accurate stats, instantly computed from our database.
+                Ask about players, agents, maps, and regions.
               </p>
             </div>
 
@@ -100,7 +80,7 @@ const Index = () => {
             <SearchBar onSearch={handleSearch} isLoading={isLoading} />
 
             {/* Results */}
-            <QueryResult data={result} isLoading={isLoading} />
+            <QueryResult data={result} error={error} isLoading={isLoading} />
           </div>
         </main>
 
@@ -108,13 +88,8 @@ const Index = () => {
         <footer className="border-t border-border py-8 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              Powered by Lovable Cloud • Data for demonstration purposes
+              ValMuse v1 — Data sourced from vlr.gg/stats
             </p>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-muted-foreground">
-                Sample data includes: VCT Champions 2023-2024, Masters events
-              </span>
-            </div>
           </div>
         </footer>
       </div>
